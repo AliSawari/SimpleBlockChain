@@ -23,7 +23,7 @@ class Block {
 
   mine(diff){
     while(this.hash.substring(0, diff) !== Array(diff + 1).join('0')){
-      this.nonce++;
+      this.nonce = this.nonce + 1;
       this.hash = this.calcHash();
     }
 
@@ -34,7 +34,7 @@ class Block {
 class BlockChain {
   constructor(){
     this.chain = [new Block(0, "Genesis Block", 0)];
-    this.diff = 0;
+    this.diff = 1;
   }
 
   getLatestBlock(){
@@ -71,8 +71,9 @@ class BlockChain {
   }
 
   info(){
-    // str(this.chain);
-    console.log('\nBlockChain status: \n', this);
+    console.log(`\nBlockChain blocks: ${this.chain.length}`);
+    console.log(`\nBlockChain Difficulty: ${this.diff}`);
+    console.log('\nChain: \n', this.chain);
   }
 
   isChainValid(){
@@ -98,9 +99,37 @@ class BlockChain {
 
 var AliCoin = new BlockChain();
 
-setInterval(() => {
-  AliCoin.addBlock({
-    coins: 2
-  });
-  console.log("This Block: ", AliCoin.getLatestBlock());
-}, 500);
+AliCoin.addBlock({
+  from: 'Ali',
+  to: 'World',
+  amount: 250
+});
+
+AliCoin.addBlock({
+  from: 'Peter',
+  to: 'John',
+  amount: 590
+});
+
+AliCoin.addBlock({
+  from: 'Ali',
+  to: 'Peter',
+  amount: 900
+});
+
+AliCoin.addBlock({
+  from: 'John',
+  to: 'World',
+  amount: 120
+});
+
+AliCoin.info();
+
+console.log("Is our BlockChain Valid? ", AliCoin.isChainValid())
+
+// setInterval(() => {
+//   AliCoin.addBlock({
+//     coins: 2
+//   });
+//   console.log("This Block: ", AliCoin.getLatestBlock());
+// }, 500);
