@@ -1,20 +1,37 @@
+// A simple BlockChain example via Nodejs
+// this example shows the core functionality of a BlockChain system and how it works
+// want to add  more options? here's the GitHub rep: https://github.com/AliSawari/SimpleBlockChain
+// THIS EXAMPLE IS INSPIRED BY : youtu.be/zVqczFZr124 
+
+// requiring Hash function
 const {createHmac} = require('crypto');
 
+// simplify some functions
 function str(val){
   return JSON.stringify(val, null, 2);
 }
 
+// the block class is used to init a new Block
+// index is the position of the block in the chain
+// data is the user's secret input of data
+// timeStamp is the time that the block has been created 
+// prevHash is the hash of the previous block
+// hash is the hash calculated by the calcHash method
+// nonce is the random number which is being used in a hash function in order ->
+// to reach a certain amount of zeros in the beginning of the hash (AKA : Proof of Work)
 class Block {
   constructor(index, data, prevHash){
     this.index = index;
     this.data = data;
     this.timeStamp = Date.now();
     this.prevHash = prevHash;
-    this.hash = this.calcHash();
     this.nonce = 0;
+    this.hash = this.calcHash();
   }
 
   calcHash(){
+    // this method is used to take some values, put them in an object then stringify that object
+    // toBeHashed value is the stringified type of our data and it'll be passed to the hash function
     let {index, data, timeStamp, prevHash, nonce} = this;
     let simple = {index, data, timeStamp, prevHash, nonce};
     let toBeHashed = str(simple);
@@ -22,15 +39,33 @@ class Block {
   }
 
   mine(diff){
-    while(this.hash.substring(0, diff) !== Array(diff + 1).join('0')){
+    // this method makes sure that for each defined Difficulty there is zeros in beginning of the hash
+    // this method is the implementation of Proof of Work. which makes mining each block take longer time
+    // you see here nonce will be incremented by one. that will affect the output of the hash function untill 
+    // there are enough zeros to pass the if statement
+
+    // while(this.hash.substring(0, diff) !== Array(diff + 1).join('0')){
+    //   this.nonce = this.nonce + 1;
+    //   this.hash = this.calcHash();
+    // }
+
+    if(this.hash.substring(0, diff) === Array(diff + 1).join('0')){
+      return console.log(`\nBlock Mined: ${this.hash}`);
+    } else {
       this.nonce = this.nonce + 1;
       this.hash = this.calcHash();
+      return this.mine(diff);
     }
-
-    console.log("\nBlock Mined: ", this.hash);
   }
 }
 
+
+// this is the BlockChain class. used to init a new BlockChain
+// notice how the BlockChain is inited by a Genesis block. this block is the first block
+// thats why it has index of 0 and previous Hash of 0
+// chain is the array that holds the block objects
+// diff is the current Difficulty of the BlockChain. it will be passed to the mine method in the block
+// to define the amount of zeros in the beginning of a hash
 class BlockChain {
   constructor(){
     this.chain = [new Block(0, "Genesis Block", 0)];
@@ -38,10 +73,17 @@ class BlockChain {
   }
 
   getLatestBlock(){
+    // returns the latest block
     return this.chain[this.chain.length - 1];
   }
 
   addBlock(data){
+    // takes the users input data and pass it to a new block
+    // this.chain.length = index + 1
+    // get Latest Block's hash 
+    // mines the block with the specified Difficulty
+    // adds the block to the chain
+    // updates the Difficulty
     let newBlock = new Block(this.chain.length, data, this.getLatestBlock().hash);
     newBlock.mine(this.diff);
     this.chain.push(newBlock);
@@ -49,6 +91,8 @@ class BlockChain {
   }
 
   updateDiff(){
+    // this method gets called each time a new block is added to the chain
+    // it increases the Difficulty by the amount of the blocks
     let n = this.chain.length;
     if(n >= 1 && n < 20){
       this.diff = 1;
@@ -71,22 +115,24 @@ class BlockChain {
   }
 
   info(){
+    // returns some information about the BlockChain
     console.log(`\nBlockChain blocks: ${this.chain.length}`);
     console.log(`\nBlockChain Difficulty: ${this.diff}`);
     console.log('\nChain: \n', this.chain);
   }
 
   isChainValid(){
+    // this method makes sure everything is perfectly legal and correct 
     let rt = true;
     for(let x = 1; x < this.chain.length; x++){
       let current = this.chain[x];
       let prev = this.chain[x - 1];
-      
+      // each block has a correct value of hash based on it's properties
       if(current.hash !== current.calcHash()){
         rt = false;
         return rt;
       }
-
+      // each block points to a previous block using hashes
       if(current.prevHash !== prev.hash){
         rt = false;
         return rt;
@@ -97,8 +143,12 @@ class BlockChain {
   }
 }
 
+// EXAMPLES : 
+
+// my new BlockChain :)
 var AliCoin = new BlockChain();
 
+// adding some blocks
 AliCoin.addBlock({
   from: 'Ali',
   to: 'World',
@@ -123,13 +173,49 @@ AliCoin.addBlock({
   amount: 120
 });
 
+// getting information
 AliCoin.info();
 
-console.log("Is our BlockChain Valid? ", AliCoin.isChainValid())
+// making sure the BlockChain is correct
+// using timeout to make sure all blocks are mined
+setTimeout(() => {
+  console.log("Is our BlockChain Valid? ", AliCoin.isChainValid())
+}, 500);
 
+
+// add a block each second 
 // setInterval(() => {
 //   AliCoin.addBlock({
-//     coins: 2
+//     amount: 3
 //   });
-//   console.log("This Block: ", AliCoin.getLatestBlock());
-// }, 500);
+// },1000);
+
+
+// Go ahead and change the data of one block and see if the chain 
+// is still Valid or not
+// like this :
+
+// aww Peter is so greedy! he wants a 100000 AliCoin :))
+/*
+AliCoin.chain[3].data = {
+  from: 'Ali',
+  to: 'Peter',
+  amount: 100000
+}
+console.log("Is our BlockChain Valid? ", AliCoin.isChainValid())
+*/
+
+// the code above will resolve false! because the current hash says peter received
+// 900 AliCoins. while the actual calculated hash says he received a shit ton of coins :|
+
+// even if he recalculate his hash like this:
+/*
+AliCoin.chain[3].hash = AliCoin.chain[3].calcHash();
+console.log("Is our BlockChain Valid? ", AliCoin.isChainValid())
+*/
+
+// its still unvalid :^ because when we recalculate our hash with different values
+// the next block will not point to our regenerated fake block and will break up the chain :D 
+
+
+// TEST IT OUT YOURSELF AND LET ME KNOW WHAT YOU THINK IN THE COMMENTS
