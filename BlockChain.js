@@ -1,20 +1,68 @@
 // A simple BlockChain example via Nodejs
 // this example shows the core functionality of a BlockChain system and how it works
 // want to add  more options? here's the GitHub rep: https://github.com/AliSawari/SimpleBlockChain
-// THIS EXAMPLE IS INSPIRED BY : youtu.be/zVqczFZr124 
+// THIS EXAMPLE IS INSPIRED BY : youtu.be/zVqczFZr124
 
 // requiring Hash function
 const {createHmac} = require('crypto');
+const util = require('util');
+
+
 
 // simplify some functions
 function str(val){
-  return JSON.stringify(val, null, 2);
+  //return JSON.stringify(val);
+  return util.inspect(val);
+}
+
+//Make an object a string that evaluates to an equivalent object
+//  Note that eval() seems tricky and sometimes you have to do
+//  something like eval("a = " + yourString), then use the value
+//  of a.
+//
+//  Also this leaves extra commas after everything, but JavaScript
+//  ignores them.
+function convertToText(obj) {
+    //create an array that will later be joined into a string.
+    var string = [];
+
+    //is object
+    //    Both arrays and objects seem to return "object"
+    //    when typeof(obj) is applied to them. So instead
+    //    I am checking to see if they have the property
+    //    join, which normal objects don't have but
+    //    arrays do.
+    if (typeof(obj) == "object" && (obj.join == undefined)) {
+        string.push("{");
+        for (prop in obj) {
+            string.push(prop, ": ", convertToText(obj[prop]), ",");
+        };
+        string.push("}");
+
+    //is array
+    } else if (typeof(obj) == "object" && !(obj.join == undefined)) {
+        string.push("[")
+        for(prop in obj) {
+            string.push(convertToText(obj[prop]), ",");
+        }
+        string.push("]")
+
+    //is function
+    } else if (typeof(obj) == "function") {
+        string.push(obj.toString())
+
+    //all other values can be done with JSON.stringify
+    } else {
+        string.push(JSON.stringify(obj))
+    }
+
+    return string.join("")
 }
 
 // the block class is used to init a new Block
 // index is the position of the block in the chain
 // data is the user's secret input of data
-// timeStamp is the time that the block has been created 
+// timeStamp is the time that the block has been created
 // prevHash is the hash of the previous block
 // hash is the hash calculated by the calcHash method
 // nonce is the random number which is being used in a hash function in order ->
@@ -34,14 +82,15 @@ class Block {
     // toBeHashed value is the stringified type of our data and it'll be passed to the hash function
     let {index, data, timeStamp, prevHash, nonce} = this;
     let simple = {index, data, timeStamp, prevHash, nonce};
-    let toBeHashed = str(simple);
+    // let toBeHashed = str(simple);
+    let toBeHashed = convertToText(simple);
     return createHmac('sha256', toBeHashed).digest('hex');
   }
 
   mine(diff){
     // this method makes sure that for each defined Difficulty there is zeros in beginning of the hash
     // this method is the implementation of Proof of Work. which makes mining each block take longer time
-    // you see here nonce will be incremented by one. that will affect the output of the hash function untill 
+    // you see here nonce will be incremented by one. that will affect the output of the hash function untill
     // there are enough zeros to pass the if statement
 
     // while(this.hash.substring(0, diff) !== Array(diff + 1).join('0')){
@@ -80,7 +129,7 @@ class BlockChain {
   addBlock(data){
     // takes the users input data and pass it to a new block
     // this.chain.length = index + 1
-    // get Latest Block's hash 
+    // get Latest Block's hash
     // mines the block with the specified Difficulty
     // adds the block to the chain
     // updates the Difficulty
@@ -122,7 +171,7 @@ class BlockChain {
   }
 
   isChainValid(){
-    // this method makes sure everything is perfectly legal and correct 
+    // this method makes sure everything is perfectly legal and correct
     let rt = true;
     for(let x = 1; x < this.chain.length; x++){
       let current = this.chain[x];
@@ -143,7 +192,7 @@ class BlockChain {
   }
 }
 
-// EXAMPLES : 
+// EXAMPLES :
 
 // my new BlockChain :)
 var AliCoin = new BlockChain();
@@ -180,30 +229,30 @@ AliCoin.info();
 // using timeout to make sure all blocks are mined
 setTimeout(() => {
   console.log("Is our BlockChain Valid? ", AliCoin.isChainValid())
-}, 500);
+}, 7);
 
 
-// add a block each second 
-// setInterval(() => {
-//   AliCoin.addBlock({
-//     amount: 3
-//   });
-// },1000);
+// add a block each second
+setInterval(() => {
+  AliCoin.addBlock({
+    amount: 3
+  });
+},1000);
 
 
-// Go ahead and change the data of one block and see if the chain 
+// Go ahead and change the data of one block and see if the chain
 // is still Valid or not
 // like this :
 
 // aww Peter is so greedy! he wants a 100000 AliCoin :))
-/*
-AliCoin.chain[3].data = {
-  from: 'Ali',
-  to: 'Peter',
-  amount: 100000
-}
-console.log("Is our BlockChain Valid? ", AliCoin.isChainValid())
-*/
+//
+// AliCoin.chain[3].data = {
+//   from: 'Ali',
+//   to: 'Peter',
+//   amount: 100000
+// }
+// console.log("Is our BlockChain Valid? ", AliCoin.isChainValid())
+
 
 // the code above will resolve false! because the current hash says peter received
 // 900 AliCoins. while the actual calculated hash says he received a shit ton of coins :|
@@ -215,7 +264,7 @@ console.log("Is our BlockChain Valid? ", AliCoin.isChainValid())
 */
 
 // its still unvalid :^ because when we recalculate our hash with different values
-// the next block will not point to our regenerated fake block and will break up the chain :D 
+// the next block will not point to our regenerated fake block and will break up the chain :D
 
 
 // TEST IT OUT YOURSELF AND LET ME KNOW WHAT YOU THINK IN THE COMMENTS
