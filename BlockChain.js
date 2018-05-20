@@ -237,6 +237,7 @@ setInterval(() => {
   AliCoin.addBlock({
     amount: 3
   });
+  console.log(AliCoin.getLatestBlock());
 },1000);
 
 
