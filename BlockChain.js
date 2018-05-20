@@ -3,6 +3,9 @@
 // want to add  more options? here's the GitHub rep: https://github.com/AliSawari/SimpleBlockChain
 // THIS EXAMPLE IS INSPIRED BY : youtu.be/zVqczFZr124
 
+// Warning: there are some certain issues with the code
+// check out issues!!
+
 // requiring Hash function
 const {createHmac} = require('crypto');
 const util = require('util');
